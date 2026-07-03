@@ -2,35 +2,15 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { BrainOverlay } from "@/components/brain-overlay";
+import { GameCard } from "@/components/game-card";
 
 export const dynamic = "force-dynamic";
-
-const lobuloLabels: Record<string, string> = {
-  frontal: "Frontal",
-  temporal: "Temporal",
-  parietal: "Parietal",
-  occipital: "Occipital",
-};
 
 const lobuloColors: Record<string, string> = {
   frontal: "from-red-400 to-red-500",
   temporal: "from-green-400 to-green-500",
   parietal: "from-blue-400 to-blue-500",
   occipital: "from-yellow-400 to-yellow-500",
-};
-
-const lobuloBorders: Record<string, string> = {
-  frontal: "border-red-300 bg-red-50",
-  temporal: "border-green-300 bg-green-50",
-  parietal: "border-blue-300 bg-blue-50",
-  occipital: "border-yellow-300 bg-yellow-50",
-};
-
-const lobuloBadges: Record<string, string> = {
-  frontal: "bg-red-100 text-red-700",
-  temporal: "bg-green-100 text-green-700",
-  parietal: "bg-blue-100 text-blue-700",
-  occipital: "bg-yellow-100 text-yellow-700",
 };
 
 export default async function MiCerebroPage() {
@@ -61,7 +41,9 @@ export default async function MiCerebroPage() {
     lobuloImg: p.juego.lobuloImg,
     descripcion: p.juego.descripcion,
     pdfUrl: p.juego.pdfUrl,
+    cartaUrl: `/carta-${p.juego.lobulo}.png`,
     completado: !!p.completadoAt,
+    color: lobuloColors[p.juego.lobulo] ?? "from-green-400 to-green-500",
   }));
 
   const completados = juegos.filter((j) => j.completado).length;
@@ -82,60 +64,9 @@ export default async function MiCerebroPage() {
           <BrainOverlay juegos={juegos} />
         </div>
 
-        <div className="w-full flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-4">
           {juegos.map((juego) => (
-            <div
-              key={juego.id}
-              className={`rounded-xl border-2 p-4 transition-all ${
-                juego.completado
-                  ? lobuloBorders[juego.lobulo] ?? "border-green-300 bg-green-50"
-                  : "border-gray-100 bg-white/60"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`shrink-0 w-1.5 h-10 rounded-full ${
-                    juego.completado
-                      ? `bg-gradient-to-b ${lobuloColors[juego.lobulo] ?? "from-green-400 to-green-500"}`
-                      : "bg-gray-200"
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`font-semibold text-sm ${
-                      juego.completado ? "text-gray-900" : "text-gray-400"
-                    }`}>
-                      {juego.nombre}
-                    </p>
-                    {juego.completado && (
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                        lobuloBadges[juego.lobulo] ?? "bg-green-100 text-green-700"
-                      }`}>
-                        {lobuloLabels[juego.lobulo] ?? juego.lobulo}
-                      </span>
-                    )}
-                  </div>
-                  <p className={`text-xs mt-0.5 ${
-                    juego.completado ? "text-gray-500" : "text-gray-300"
-                  }`}>
-                    {juego.descripcion}
-                  </p>
-                </div>
-                {juego.completado ? (
-                  <a
-                    href={juego.pdfUrl}
-                    download
-                    className="shrink-0 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    PDF
-                  </a>
-                ) : (
-                  <span className="shrink-0 text-[10px] font-medium text-gray-300 bg-gray-50 px-2 py-1 rounded-full">
-                    🔒
-                  </span>
-                )}
-              </div>
-            </div>
+            <GameCard key={juego.id} juego={juego} />
           ))}
         </div>
       </div>
