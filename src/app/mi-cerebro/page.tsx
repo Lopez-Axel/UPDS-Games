@@ -13,7 +13,12 @@ const lobuloColors: Record<string, string> = {
   occipital: "from-yellow-400 to-yellow-500",
 };
 
-export default async function MiCerebroPage() {
+export default async function MiCerebroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ full?: string }>;
+}) {
+  const { full } = await searchParams;
   const cookieStore = await cookies();
   const userId = cookieStore.get("userId")?.value;
 
@@ -60,7 +65,7 @@ export default async function MiCerebroPage() {
         </div>
 
         <div className="w-full rounded-2xl bg-white p-6 shadow-sm border border-blue-100">
-          <BrainSection juegos={juegos} />
+          <BrainSection juegos={juegos} fullColor={full === "1"} />
         </div>
 
         <div className="w-full flex flex-col gap-3">

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
+import { SyncFlow } from "@/components/sync-flow";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +10,6 @@ export default async function SyncPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
 
   const progreso = await prisma.progreso.findFirst({
     where: {
@@ -19,30 +17,21 @@ export default async function SyncPage({
       syncExpiresAt: { gt: new Date() },
       completadoAt: null,
     },
+    include: { juego: { select: { nombre: true, lobulo: true, lobuloImg: true } } },
   });
 
   if (!progreso) {
     redirect("/?error=token-invalido");
   }
 
-  const targetUserId = userId ?? progreso.userId;
-
-  await prisma.progreso.update({
-    where: { id: progreso.id },
-    data: {
-      completadoAt: new Date(),
-      syncToken: null,
-      syncExpiresAt: null,
-    },
-  });
-
-  if (!userId) {
-    cookieStore.set("userId", targetUserId, {
-      path: "/",
-      sameSite: "lax",
-      maxAge: 86400,
-    });
-  }
-
-  redirect("/mi-cerebro");
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+      <SyncFlow
+        token={token}
+        juegoNombre={progreso.juego.nombre}
+        lobulo={progreso.juego.lobulo}
+        lobuloImg={progreso.juego.lobuloImg}
+      />
+    </div>
+  );
 }

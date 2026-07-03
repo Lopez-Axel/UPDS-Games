@@ -5,8 +5,7 @@ import { Html5Qrcode } from "html5-qrcode";
 
 interface ScanResult {
   exito: boolean;
-  juegoNombre: string;
-  lobulo: string;
+  token?: string;
   error?: string;
 }
 
@@ -49,8 +48,6 @@ export default function QrScanner({ onResult }: QrScannerProps) {
             if (!match) {
               onResult({
                 exito: false,
-                juegoNombre: "",
-                lobulo: "",
                 error: "QR no reconocido. Escaneá el código del panel admin.",
               });
               return;
@@ -70,40 +67,16 @@ export default function QrScanner({ onResult }: QrScannerProps) {
               if (!res.ok || !data.valido) {
                 onResult({
                   exito: false,
-                  juegoNombre: "",
-                  lobulo: "",
                   error: data.error ?? "Token inválido o expirado",
                 });
                 return;
               }
 
-              const completeRes = await fetch("/api/scanner/completar", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token }),
-              });
-
-              if (!completeRes.ok) {
-                onResult({
-                  exito: false,
-                  juegoNombre: "",
-                  lobulo: "",
-                  error: "Error al completar el desbloqueo",
-                });
-                return;
-              }
-
-              onResult({
-                exito: true,
-                juegoNombre: data.juegoNombre,
-                lobulo: data.lobulo,
-              });
+              onResult({ exito: true, token });
             } catch {
               if (!cancelled) {
                 onResult({
                   exito: false,
-                  juegoNombre: "",
-                  lobulo: "",
                   error: "Error de conexión. Intentá de nuevo.",
                 });
               }

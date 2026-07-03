@@ -1,8 +1,7 @@
 ﻿"use client";
 
-import { useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { Scan, PartyPopper, AlertCircle, X } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Scan, AlertCircle, X } from "lucide-react";
 import { BrainOverlay } from "@/components/brain-overlay";
 import { Dialog } from "@/components/ui/dialog";
 import dynamic from "next/dynamic";
@@ -27,35 +26,32 @@ interface JuegoData {
 
 interface ScanResult {
   exito: boolean;
-  juegoNombre: string;
-  lobulo: string;
+  token?: string;
   error?: string;
 }
 
-export function BrainSection({ juegos }: { juegos: JuegoData[] }) {
-  const router = useRouter();
+export function BrainSection({
+  juegos,
+  fullColor = false,
+}: {
+  juegos: JuegoData[];
+  fullColor?: boolean;
+}) {
   const [scanOpen, setScanOpen] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const closingRef = useRef(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   const handleScanResult = useCallback((result: ScanResult) => {
-    setScanResult(result);
     setScanOpen(false);
+    if (result.exito && result.token) {
+      window.location.href = `/sync/${result.token}`;
+    } else {
+      setScanError(result.error ?? "QR inválido o expirado");
+    }
   }, []);
-
-  const handleSuccessClose = useCallback(() => {
-    if (closingRef.current) return;
-    closingRef.current = true;
-    setScanResult(null);
-    setTimeout(() => {
-      router.refresh();
-      closingRef.current = false;
-    }, 250);
-  }, [router]);
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <BrainOverlay juegos={juegos} />
+      <BrainOverlay juegos={juegos} fullColor={fullColor} />
 
       <button
         onClick={() => setScanOpen(true)}
@@ -84,57 +80,30 @@ export function BrainSection({ juegos }: { juegos: JuegoData[] }) {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <Dialog.Root open={!!scanResult} disablePointerDismissal>
+      <Dialog.Root open={!!scanError} disablePointerDismissal>
         <Dialog.Portal>
           <Dialog.Backdrop />
           <Dialog.Popup className="w-[85vw] max-w-sm bg-white rounded-2xl shadow-2xl p-0 overflow-hidden">
-            {scanResult?.exito ? (
-              <>
-                <div className="bg-gradient-to-r from-green-500 to-green-600 px-5 py-6 text-center">
-                  <PartyPopper className="w-10 h-10 mx-auto mb-2 text-white" />
-                  <h2 className="text-xl font-bold text-white">
-                    {scanResult.juegoNombre}
-                  </h2>
-                  <p className="text-green-100 text-sm mt-1">
-                    Lóbulo {scanResult.lobulo} desbloqueado
-                  </p>
-                </div>
-                <div className="p-5 text-center">
-                  <p className="text-sm text-gray-600 mb-4">
-                    Se ha revelado un nuevo color en tu cerebro
-                  </p>
-                  <button
-                    onClick={handleSuccessClose}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all"
-                  >
-                    Ver mi cerebro
-                  </button>
-                </div>
-              </>
-            ) : scanResult ? (
-              <>
-                <div className="bg-gradient-to-r from-red-500 to-red-600 px-5 py-6 text-center">
-                  <AlertCircle className="w-10 h-10 mx-auto mb-2 text-white" />
-                  <h2 className="text-xl font-bold text-white">
-                    QR inválido
-                  </h2>
-                </div>
-                <div className="p-5 text-center">
-                  <p className="text-sm text-gray-600 mb-4">
-                    {scanResult.error ?? "Este código ya expiró o no es válido"}
-                  </p>
-                  <button
-                    onClick={() => {
-                      setScanResult(null);
-                      setScanOpen(true);
-                    }}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all"
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              </>
-            ) : null}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 px-5 py-6 text-center">
+              <AlertCircle className="w-10 h-10 mx-auto mb-2 text-white" />
+              <h2 className="text-xl font-bold text-white">
+                QR inválido
+              </h2>
+            </div>
+            <div className="p-5 text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                {scanError ?? "Este código ya expiró o no es válido"}
+              </p>
+              <button
+                onClick={() => {
+                  setScanError(null);
+                  setScanOpen(true);
+                }}
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all"
+              >
+                Reintentar
+              </button>
+            </div>
           </Dialog.Popup>
         </Dialog.Portal>
       </Dialog.Root>

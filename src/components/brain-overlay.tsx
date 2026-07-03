@@ -16,6 +16,7 @@ interface JuegoInfo {
 
 interface BrainOverlayProps {
   juegos: JuegoInfo[];
+  fullColor?: boolean;
 }
 
 const ANCHO = 1086;
@@ -43,9 +44,10 @@ const lobuloColors: Record<string, string> = {
   occipital: "from-yellow-400 to-yellow-500",
 };
 
-export function BrainOverlay({ juegos }: BrainOverlayProps) {
+export function BrainOverlay({ juegos, fullColor = false }: BrainOverlayProps) {
   const [selectedCarta, setSelectedCarta] = useState<JuegoInfo | null>(null);
   const completados = juegos.filter((j) => j.completado);
+  const allCompleted = fullColor || (juegos.length > 0 && juegos.every((j) => j.completado));
 
   return (
     <>
@@ -53,24 +55,37 @@ export function BrainOverlay({ juegos }: BrainOverlayProps) {
         className="relative w-full mx-auto"
         style={{ aspectRatio: `${ANCHO}/${ALTO}` }}
       >
-        <Image
-          src="/cerebro-gris.png"
-          alt="Cerebro"
-          fill
-          className="object-contain"
-          sizes="(max-width: 768px) 100vw, 400px"
-          priority
-        />
-        {juegos
-          .filter((j) => j.completado)
-          .map((juego) => (
-            <img
-              key={juego.id}
-              src={juego.lobuloImg}
-              alt={`Lóbulo ${juego.lobulo}`}
-              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        {allCompleted ? (
+          <Image
+            src="/cerebro-fullcolor.png"
+            alt="Cerebro completo"
+            fill
+            className="object-contain"
+            sizes="(max-width: 768px) 100vw, 400px"
+            priority
+          />
+        ) : (
+          <>
+            <Image
+              src="/cerebro-gris.png"
+              alt="Cerebro"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, 400px"
+              priority
             />
-          ))}
+            {juegos
+              .filter((j) => j.completado)
+              .map((juego) => (
+                <img
+                  key={juego.id}
+                  src={juego.lobuloImg}
+                  alt={`Lóbulo ${juego.lobulo}`}
+                  className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+                />
+              ))}
+          </>
+        )}
         {completados.map((juego) => {
           const coord = lobuloCoords[juego.lobulo];
           if (!coord) return null;

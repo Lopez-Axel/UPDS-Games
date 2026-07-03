@@ -21,6 +21,7 @@ export async function POST(req: Request) {
       syncExpiresAt: { gt: new Date() },
       completadoAt: null,
     },
+    include: { juego: { select: { nombre: true, lobulo: true } } },
   });
 
   if (!progreso) {
@@ -41,7 +42,20 @@ export async function POST(req: Request) {
     },
   });
 
-  const response = NextResponse.json({ exito: true });
+  const totalJuegos = await prisma.juego.count();
+  const completedCount = await prisma.progreso.count({
+    where: {
+      userId: targetUserId,
+      completadoAt: { not: null },
+    },
+  });
+
+  const response = NextResponse.json({
+    exito: true,
+    allCompleted: completedCount >= totalJuegos,
+    juegoNombre: progreso.juego.nombre,
+    lobulo: progreso.juego.lobulo,
+  });
 
   if (!cookieUserId) {
     response.cookies.set("userId", targetUserId, {
